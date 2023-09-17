@@ -2,32 +2,24 @@ import catchAsyncErrors from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../utils/ErrorHandler.js";
 import Contact from "../models/contactModel.js";
 
-export const getAllContacts = catchAsyncErrors(async (req, res, next) => {
-
+export const getAllOrSpecificContacts = catchAsyncErrors(async (req, res, next) => {
+    let contacts;
+    if (req.query.contactName && req.query.contactName !== undefined && req.query.contactName !== '') {
+        contacts = await Contact.find({
+            contactName: {
+                $regex: req.query.contactName,
+                $options: "i"
+            }
+        });
+    } else {
+        contacts = await Contact.find();
+    }
     const totalContacts = await Contact.countDocuments();
-    const contacts = await Contact.find();
-
     return res.status(200).json({
         success: true,
         contacts,
         totalContacts,
     })
-});
-
-
-
-export const getSpecificContacts = catchAsyncErrors(async (req, res, next) => {
-    const contacts = await Contact.find({
-        contactName: {
-            $regex: req.query.contactName,
-            $options: "i"
-        }
-    });
-
-    return res.status(200).json({
-        success: true,
-        contacts,
-    });
 });
 
 
@@ -69,14 +61,23 @@ export const updateContact = catchAsyncErrors(async (req, res, next) => {
 
 
 export const deleteContact = catchAsyncErrors(async (req, res, next) => {
-    const contact = await Contact.findById(req.params.id);
+    const response = await Contact.deleteMany({
+        "_id": {
+            $in: req.body.deleteIds
+        }
+    });
 
-    if (!contact) { return next(new ErrorHandler('Contact not found !', 404)) };
-
-    await contact.deleteOne();
+    let message;
+    if (response.deletedCount == 0) {
+        message = 'No contact found !';
+    } else if (response.deletedCount == 1) {
+        message = 'Contact deleted successfully';
+    } else {
+        message = 'Contacts deleted successfully'
+    }
 
     return res.status(200).json({
         success: true,
-        message: 'Contact deleted successfully',
+        message,
     });
 });
