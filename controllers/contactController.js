@@ -112,7 +112,7 @@ export const downloadExcelFile = catchAsyncErrors(async (req, res, next) => {
             data.push(tempObj);
         });
         const date = new Date().toISOString().slice(0, 10);
-        const fileName = `Contact_Extended_Excel_Sheet_${date}.xlsx`;
+        const fileName = `/temp/Contact_Extended_Excel_Sheet_${date}.xlsx`;
 
         const workSheet = XLSX.utils.json_to_sheet(data);
         const workBook = XLSX.utils.book_new();
